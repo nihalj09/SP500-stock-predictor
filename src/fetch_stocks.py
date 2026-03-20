@@ -9,5 +9,10 @@ def get_sp500_tickers():
     stocks = stocks.str.replace('.', '-', regex=False)
     return stocks.tolist()
 
-
-
+#Fetched historical OHLCV price data for a single stock ticker
+def fetch_stock_data(ticker, start_date, end_date):
+    stock_data = yf.download(ticker, start=start_date, end=end_date, auto_adjust=True)
+    stock_data = stock_data.reset_index()
+    ticker = stock_data['Ticker']
+    stock_data = stock_data.dropna()
+    return stock_data
