@@ -16,3 +16,12 @@ def fetch_stock_data(ticker, start_date, end_date):
     ticker = stock_data['Ticker']
     stock_data = stock_data.dropna()
     return stock_data
+
+#Fetches historical OHLCV price data for multiple stock tickers.
+def fetch_multiple_stocks(tickers, start_date, end_date):
+    all_stocks = []
+    for ticker in tickers:
+        df = fetch_stock_data(tickers, start_date, end_date)
+        all_stocks.append(df)
+    combined = pd.concat(all_stocks, ignore_index=True)
+    return combined    
