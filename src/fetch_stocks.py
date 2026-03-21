@@ -27,4 +27,3 @@ def fetch_multiple_stocks(tickers, start_date, end_date):
         all_stocks.append(df)
     combined = pd.concat(all_stocks, ignore_index=True)
     return combined    
-
