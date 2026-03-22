@@ -7,3 +7,30 @@ from dotenv import load_dotenv
 load_dotenv()
 api_key = os.getenv('NEWS_API_KEY')
 newsapi = NewsApiClient(api_key=api_key)
+
+def fetch_news_for_ticker(ticker, days_back=30):
+    # Calculate the end date as today and start date as days_back days ago
+    end_date = datetime.now().strftime('%Y-%m-%d')
+    start_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
+
+    # Fetch articles from NewsAPI using the ticker as the search query
+    response = newsapi.get_everything(
+        q=ticker,
+        from_param=start_date,
+        to=end_date,
+        language='en',
+        sort_by='relevancy'
+    )
+    
+    # Loop over the articles and extract the fields we need
+    articles = []
+    for article in response['articles']:
+        articles.append({
+            'Ticker': ticker,
+            'Headline': article['title'],
+            'Description': article['description'],
+            'Source': article['source']['name'],
+            'Published': article['publishedAt']
+        })
+    
+    return pd.DataFrame(articles)
