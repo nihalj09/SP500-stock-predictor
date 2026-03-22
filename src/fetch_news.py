@@ -8,7 +8,7 @@ load_dotenv()
 api_key = os.getenv('NEWS_API_KEY')
 newsapi = NewsApiClient(api_key=api_key)
 
-def fetch_news_for_ticker(ticker, days_back=30):
+def fetch_news_for_ticker(ticker, days_back=20):
     # Calculate the end date as today and start date as days_back days ago
     end_date = datetime.now().strftime('%Y-%m-%d')
     start_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
@@ -35,7 +35,7 @@ def fetch_news_for_ticker(ticker, days_back=30):
     
     return pd.DataFrame(articles)
 
-def fetch_news_for_multiple_tickers(tickers, days_back=30):
+def fetch_news_for_multiple_tickers(tickers, days_back=20):
     # Create an empty list to hold the DataFrame for each ticker
     all_news = []
     
@@ -47,4 +47,3 @@ def fetch_news_for_multiple_tickers(tickers, days_back=30):
     # Combine all individual DataFrames into one and return it
     combined = pd.concat(all_news, ignore_index=True)
     return combined
-
