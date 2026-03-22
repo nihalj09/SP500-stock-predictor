@@ -21,7 +21,7 @@ def fetch_news_for_ticker(ticker, days_back=30):
         language='en',
         sort_by='relevancy'
     )
-    
+
     # Loop over the articles and extract the fields we need
     articles = []
     for article in response['articles']:
@@ -34,3 +34,17 @@ def fetch_news_for_ticker(ticker, days_back=30):
         })
     
     return pd.DataFrame(articles)
+
+def fetch_news_for_multiple_tickers(tickers, days_back=30):
+    # Create an empty list to hold the DataFrame for each ticker
+    all_news = []
+    
+    # Loop over each ticker and fetch news for it
+    for ticker in tickers:
+        df = fetch_news_for_ticker(ticker, days_back)
+        all_news.append(df)
+    
+    # Combine all individual DataFrames into one and return it
+    combined = pd.concat(all_news, ignore_index=True)
+    return combined
+
