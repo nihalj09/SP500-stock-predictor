@@ -46,3 +46,31 @@ def add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df.dropna(inplace=True)
     
     return df
+
+def prepare_features(df: pd.DataFrame):
+    # Add all technical indicators to the DataFrame
+    df = add_technical_indicators(df)
+    
+    # Target: 1 if price is higher 10 days from now, 0 if lower
+    df['target'] = (df['Close'].shift(-10) > df['Close']).astype(int)
+    
+    # Drop last 10 rows since they have no valid future price to compare against
+    df = df.dropna()
+    
+    # Explicitly define which columns are features
+    feature_cols = [
+        'SMA_10', 'SMA_20', 'SMA_50',
+        'EMA_10', 'EMA_20', 'EMA_50',
+        'RSI', 'MACD', 'MACD_signal', 'MACD_hist',
+        'STOCH_K', 'STOCH_D', 'CCI',
+        'BB_upper', 'BB_mid', 'BB_lower', 'BB_width',
+        'ATR', 'daily_return',
+        'OBV', 'VWAP', 'CMF', 'MFI',
+        'return_lag1', 'return_lag2', 'return_lag3'
+    ]
+    
+    # X = input features, y = target label
+    X = df[feature_cols]
+    y = df['target']
+    
+    return X, y
