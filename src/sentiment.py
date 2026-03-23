@@ -19,6 +19,31 @@ def load_model(model_name="ProsusAI/finbert"):
     
     return tokenizer, model, device
 
+def analyze_sentiment(text, tokenizer, model, device):
+    # tokenize the input text and prepare it as a pytorch tensor
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True)
+    
+    # move the tokenized inputs to the same device as the model
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+    
+    # disable gradient calculation since we are only doing inference not training
+    with torch.no_grad():
+        outputs = model(**inputs)
+    
+    # convert raw output logits to probabilities using softmax
+    probabilities = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    
+    # move probabilities to cpu and convert to a numpy array
+    probabilities = probabilities.cpu().numpy()[0]
+    
+    # map probabilities to their corresponding labels
+    labels = ["positive", "negative", "neutral"]
+    scores = {label: float(prob) for label, prob in zip(labels, probabilities)}
+    
+    # return the label with the highest probability and all scores
+    sentiment = max(scores, key=scores.get)
+    return sentiment, scores
+
 def aggregate_sentiment(articles, tokenizer, model, device):
     # return empty result if no articles are provided for a ticker
     if not articles:
