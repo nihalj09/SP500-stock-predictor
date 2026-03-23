@@ -74,3 +74,32 @@ def aggregate_sentiment(articles, tokenizer, model, device):
     
     return avg_scores
 
+def process_news_sentiment(news_df, tokenizer, model, device):
+    # store results as a list of dictionaries, one per ticker per day
+    results = []
+    
+    # group the news dataframe by ticker and date
+    grouped = news_df.groupby(["ticker", "date"])
+    
+    # loop through each ticker and date combination
+    for (ticker, date), group in grouped:
+        # convert the group of articles to a list of dictionaries
+        articles = group.to_dict("records")
+        
+        # aggregate sentiment scores across all articles for this ticker and date
+        scores = aggregate_sentiment(articles, tokenizer, model, device)
+        
+        # store the ticker, date and scores as a single row
+        results.append({
+            "ticker": ticker,
+            "date": date,
+            **scores
+        })
+    
+    # convert the list of results into a dataframe
+    sentiment_df = pd.DataFrame(results)
+    
+    # sort by ticker and date so it aligns cleanly with the features dataframe
+    sentiment_df = sentiment_df.sort_values(["ticker", "date"]).reset_index(drop=True)
+    
+    return sentiment_df
