@@ -67,3 +67,17 @@ def predict_tree(tree, x):
         return predict_tree(tree["left"], x)
     else:
         return predict_tree(tree["right"], x)
+
+def build_random_forest(X, y, n_trees=100, max_depth=10, min_samples_split=2):
+    forest = []
+    
+    for _ in range(n_trees):
+        # Randomly sample rows with replacement (bootstrapping)
+        indices = np.random.choice(len(y), len(y), replace=True)
+        X_sample, y_sample = X[indices], y[indices]
+        
+        # Build a tree on the sampled data and add it to the forest
+        tree = build_decision_tree(X_sample, y_sample, max_depth, min_samples_split)
+        forest.append(tree)
+    
+    return forest
