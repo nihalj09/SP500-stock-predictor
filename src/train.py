@@ -56,3 +56,14 @@ def build_decision_tree(X, y, max_depth=10, min_samples_split=2, depth=0):
         "left": build_decision_tree(X[best_mask], y[best_mask], max_depth, min_samples_split, depth + 1),
         "right": build_decision_tree(X[~best_mask], y[~best_mask], max_depth, min_samples_split, depth + 1),
     }
+
+def predict_tree(tree, x):
+    # Base case — if we've reached a leaf node, return its value
+    if "value" in tree:
+        return tree["value"]
+    
+    # Walk down the correct branch based on the feature threshold
+    if x[tree["feature"]] <= tree["threshold"]:
+        return predict_tree(tree["left"], x)
+    else:
+        return predict_tree(tree["right"], x)
