@@ -81,3 +81,65 @@ def build_random_forest(X, y, n_trees=100, max_depth=10, min_samples_split=2):
         forest.append(tree)
     
     return forest
+
+def train(tickers):
+    # Fetch stock and news data for all tickers
+    stock_data = fetch_multiple_stocks(tickers)
+    news_data = fetch_news_for_multiple_tickers(tickers)
+
+    # Build technical indicator features for each ticker
+    all_features = []
+    for ticker in tickers:
+        ticker_df = stock_data[stock_data['Ticker'] == ticker].copy()
+        X, y = prepare_features(ticker_df)
+        X['Ticker'] = ticker
+        X['Date'] = ticker_df.index[:len(X)]
+        X['target'] = y.values
+        all_features.append(X)
+    
+    features_df = pd.concat(all_features, ignore_index=True)
+
+    # Build sentiment scores from news data
+    sentiment_df = process_news_sentiment(news_data)
+
+    # Merge technical features with sentiment scores on Ticker and Date
+    merged_df = features_df.merge(sentiment_df, on=['Ticker', 'Date'], how='left')
+    merged_df['sentiment_score'] = merged_df['sentiment_score'].fillna(0)
+
+    # Split into features and target, then train/test split
+    feature_cols = [col for col in merged_df.columns if col not in ['Ticker', 'Date', 'target']]
+    X = merged_df[feature_cols].values
+    y = merged_df['target'].values
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+
+    # Scale the features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Train the random forest
+    print("Training random forest...")
+    forest = build_random_forest(X_train, y_train)
+
+    # Evaluate on the test set
+    predictions = [predict_tree(tree, x) for x in X_test]
+    votes = np.array(predictions)
+    
+    # Majority vote across all trees for each data point
+    final_predictions = []
+    for i in range(len(X_test)):
+        tree_predictions = [predict_tree(tree, X_test[i]) for tree in forest]
+        final_predictions.append(1 if sum(tree_predictions) > len(forest) / 2 else 0)
+
+    print(classification_report(y_test, final_predictions))
+    print(confusion_matrix(y_test, final_predictions))
+
+    # Save the forest and scaler to the models/ folder
+    os.makedirs('models', exist_ok=True)
+    joblib.dump(forest, 'models/random_forest.pkl')
+    joblib.dump(scaler, 'models/scaler.pkl')
+    print("Model saved to models/")
+
+if __name__ == "__main__":
+    tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
+    train(tickers)
