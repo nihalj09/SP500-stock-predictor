@@ -7,7 +7,7 @@ import joblib
 import os
 
 from features import prepare_features
-from sentiment import process_news_sentiment
+from sentiment import process_news_sentiment, load_model
 from fetch_stocks import fetch_multiple_stocks
 from fetch_news import fetch_news_for_multiple_tickers
 
@@ -84,7 +84,7 @@ def build_random_forest(X, y, n_trees=100, max_depth=10, min_samples_split=2):
 
 def train(tickers):
     # Fetch stock and news data for all tickers
-    stock_data = fetch_multiple_stocks(tickers)
+    stock_data = fetch_multiple_stocks(tickers, start_date='2020-01-01', end_date='2024-12-31')    
     news_data = fetch_news_for_multiple_tickers(tickers)
 
     # Build technical indicator features for each ticker
@@ -99,8 +99,9 @@ def train(tickers):
     
     features_df = pd.concat(all_features, ignore_index=True)
 
-    # Build sentiment scores from news data
-    sentiment_df = process_news_sentiment(news_data)
+    # Step 3 — Load FinBERT and build sentiment scores from news data
+    tokenizer, model, device = load_model()
+    sentiment_df = process_news_sentiment(news_data, tokenizer, model, device)
 
     # Merge technical features with sentiment scores on Ticker and Date
     merged_df = features_df.merge(sentiment_df, on=['Ticker', 'Date'], how='left')
@@ -121,10 +122,6 @@ def train(tickers):
     print("Training random forest...")
     forest = build_random_forest(X_train, y_train)
 
-    # Evaluate on the test set
-    predictions = [predict_tree(tree, x) for x in X_test]
-    votes = np.array(predictions)
-    
     # Majority vote across all trees for each data point
     final_predictions = []
     for i in range(len(X_test)):
