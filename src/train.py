@@ -93,7 +93,7 @@ def train(tickers):
         ticker_df = stock_data[stock_data['Ticker'] == ticker].copy()
         X, y = prepare_features(ticker_df)
         X['Ticker'] = ticker
-        X['Date'] = ticker_df.index[:len(X)]
+        X['Date'] = ticker_df['Date'].iloc[:len(X)].values
         X['target'] = y.values
         all_features.append(X)
     
@@ -105,10 +105,12 @@ def train(tickers):
 
     # Merge technical features with sentiment scores on Ticker and Date
     merged_df = features_df.merge(sentiment_df, on=['Ticker', 'Date'], how='left')
-    merged_df['sentiment_score'] = merged_df['sentiment_score'].fillna(0)
+    for col in ['positive', 'negative', 'neutral']:
+        merged_df[col] = merged_df[col].fillna(0)
+    merged_df['sentiment'] = merged_df['sentiment'].fillna('neutral')
 
     # Split into features and target, then train/test split
-    feature_cols = [col for col in merged_df.columns if col not in ['Ticker', 'Date', 'target']]
+    feature_cols = [col for col in merged_df.columns if col not in ['Ticker', 'Date', 'target', 'sentiment']]
     X = merged_df[feature_cols].values
     y = merged_df['target'].values
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)

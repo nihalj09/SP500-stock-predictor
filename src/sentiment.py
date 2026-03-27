@@ -78,21 +78,25 @@ def process_news_sentiment(news_df, tokenizer, model, device):
     # store results as a list of dictionaries, one per ticker per day
     results = []
     
+    # normalize the Published column to date only (strip time component)
+    news_df = news_df.copy()
+    news_df["Date"] = pd.to_datetime(news_df["Published"]).dt.date
+
     # group the news dataframe by ticker and date
-    grouped = news_df.groupby(["ticker", "date"])
-    
+    grouped = news_df.groupby(["Ticker", "Date"])
+
     # loop through each ticker and date combination
     for (ticker, date), group in grouped:
         # convert the group of articles to a list of dictionaries
-        articles = group.to_dict("records")
-        
+        articles = group.rename(columns={"Headline": "title", "Description": "description"}).to_dict("records")
+
         # aggregate sentiment scores across all articles for this ticker and date
         scores = aggregate_sentiment(articles, tokenizer, model, device)
-        
+
         # store the ticker, date and scores as a single row
         results.append({
-            "ticker": ticker,
-            "date": date,
+            "Ticker": ticker,
+            "Date": date,
             **scores
         })
     
@@ -100,6 +104,6 @@ def process_news_sentiment(news_df, tokenizer, model, device):
     sentiment_df = pd.DataFrame(results)
     
     # sort by ticker and date so it aligns cleanly with the features dataframe
-    sentiment_df = sentiment_df.sort_values(["ticker", "date"]).reset_index(drop=True)
+    sentiment_df = sentiment_df.sort_values(["Ticker", "Date"]).reset_index(drop=True)
     
     return sentiment_df
