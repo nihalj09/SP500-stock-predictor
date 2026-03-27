@@ -104,6 +104,8 @@ def train(tickers):
     sentiment_df = process_news_sentiment(news_data, tokenizer, model, device)
 
     # Merge technical features with sentiment scores on Ticker and Date
+    sentiment_df['Date'] = pd.to_datetime(sentiment_df['Date'])
+    features_df['Date'] = pd.to_datetime(features_df['Date'])
     merged_df = features_df.merge(sentiment_df, on=['Ticker', 'Date'], how='left')
     for col in ['positive', 'negative', 'neutral']:
         merged_df[col] = merged_df[col].fillna(0)
